@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/school_management?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Ho_Chi_Minh
+    username: root
+    password: "123456"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # ?? Hibernate t? sinh b?ng t? Entity
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+jwt:
+  signerKey: "32ByteLongSecretSignerKeyForSchoolManagementSystem2026!!!"
+  validDuration: 86400 # 24 hours
+  refreshableDuration: 2592000 # 30 days
