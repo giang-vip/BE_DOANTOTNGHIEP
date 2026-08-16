@@ -49,4 +49,34 @@ public class TeacherAnnouncementController {
                 .result(teacherAnnouncementService.createAnnouncement(username, classSectionId, request))
                 .build();
     }
+
+    @PutMapping("/{announcementId}")
+    @Operation(summary = "Cập nhật thông báo lớp học (API_TC_12)")
+    public ApiResponse<AnnouncementResponse> updateAnnouncement(
+            @PathVariable Long classSectionId,
+            @PathVariable Long announcementId,
+            @RequestBody @Valid AnnouncementRequest request
+    ) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        return ApiResponse.<AnnouncementResponse>builder()
+                .result(teacherAnnouncementService.updateAnnouncement(username, classSectionId, announcementId, request))
+                .build();
+    }
+
+    @DeleteMapping("/{announcementId}")
+    @Operation(summary = "Xóa thông báo lớp học (API_TC_13)")
+    public ApiResponse<String> deleteAnnouncement(
+            @PathVariable Long classSectionId,
+            @PathVariable Long announcementId
+    ) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        teacherAnnouncementService.deleteAnnouncement(username, classSectionId, announcementId);
+        return ApiResponse.<String>builder()
+                .result("Đã xóa thông báo thành công")
+                .build();
+    }
 }

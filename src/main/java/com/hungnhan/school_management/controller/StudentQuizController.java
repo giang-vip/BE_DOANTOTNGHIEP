@@ -1,5 +1,8 @@
 package com.hungnhan.school_management.controller;
 
+import com.hungnhan.school_management.dto.response.QuizQuestionResponse;
+import java.util.List;
+
 import com.hungnhan.school_management.dto.ApiResponse;
 import com.hungnhan.school_management.dto.request.QuizSubmissionRequest;
 import com.hungnhan.school_management.dto.response.QuizResultResponse;
@@ -54,6 +57,17 @@ public class StudentQuizController {
 
         return ApiResponse.<QuizResultResponse>builder()
                 .result(studentQuizService.getQuizResult(username, assignmentId))
+                .build();
+    }
+
+    @GetMapping("/assignments/{assignmentId}/quiz-questions")
+    @Operation(summary = "Lấy danh sách câu hỏi của bài Quiz (API_ST_12)")
+    public ApiResponse<List<QuizQuestionResponse>> getQuizQuestions(@PathVariable Long assignmentId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        return ApiResponse.<List<QuizQuestionResponse>>builder()
+                .result(studentQuizService.getQuizQuestionsForStudent(username, assignmentId))
                 .build();
     }
 }

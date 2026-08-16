@@ -3,6 +3,7 @@ package com.hungnhan.school_management.controller;
 import com.hungnhan.school_management.dto.ApiResponse;
 import com.hungnhan.school_management.dto.request.LoginRequest;
 import com.hungnhan.school_management.dto.request.ChangePasswordRequest;
+import com.hungnhan.school_management.dto.request.UpdateProfileRequest;
 import com.hungnhan.school_management.dto.response.AuthResponse;
 import com.hungnhan.school_management.dto.response.UserResponse;
 import com.hungnhan.school_management.service.AuthService;
@@ -59,6 +60,14 @@ public class AuthController {
                         "success", true,
                         "message", "Đổi mật khẩu thành công"
                 ))
+                .build();
+    }
+
+    @PutMapping("/me")
+    @Operation(summary = "Cập nhật thông tin cá nhân", description = "Cập nhật thông tin liên hệ của tài khoản đang đăng nhập.")
+    public ApiResponse<UserResponse> updateProfile(@RequestBody @Valid UpdateProfileRequest request) {
+        return ApiResponse.<UserResponse>builder()
+                .result(authService.updateProfile(request))
                 .build();
     }
 }

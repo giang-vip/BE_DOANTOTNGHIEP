@@ -10,4 +10,5 @@ public interface RegistrationPeriodService {
     RegistrationPeriodResponse getCurrentRegistrationPeriod();
     List<RegistrationPeriodResponse> getAllRegistrationPeriods();
     void toggleRegistrationPeriod(Long id, boolean isOpen);
+    void deleteRegistrationPeriod(Long id);
 }

@@ -8,4 +8,8 @@ public interface TeacherAnnouncementService {
     PageResponse<AnnouncementResponse> getAnnouncements(String username, Long classSectionId, int page, int size);
     
     AnnouncementResponse createAnnouncement(String username, Long classSectionId, AnnouncementRequest request);
+
+    AnnouncementResponse updateAnnouncement(String username, Long classSectionId, Long announcementId, AnnouncementRequest request);
+
+    void deleteAnnouncement(String username, Long classSectionId, Long announcementId);
 }

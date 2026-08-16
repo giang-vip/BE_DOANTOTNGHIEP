@@ -92,4 +92,35 @@ public class TeacherAnnouncementServiceImpl implements TeacherAnnouncementServic
 
         return announcementMapper.toAnnouncementResponse(announcementRepository.save(announcement));
     }
+
+    @Override
+    public AnnouncementResponse updateAnnouncement(String username, Long classSectionId, Long announcementId, AnnouncementRequest request) {
+        User user = getUserByUsername(username);
+        ClassSection classSection = classSectionRepository.findById(classSectionId)
+                .orElseThrow(() -> new AppException(ErrorCode.CLASS_SECTION_NOT_FOUND));
+
+        checkTeacherPermission(user, classSection);
+
+        Announcement announcement = announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new RuntimeException("Announcement not found"));
+
+        announcement.setTitle(request.getTitle());
+        announcement.setContent(request.getContent());
+
+        return announcementMapper.toAnnouncementResponse(announcementRepository.save(announcement));
+    }
+
+    @Override
+    public void deleteAnnouncement(String username, Long classSectionId, Long announcementId) {
+        User user = getUserByUsername(username);
+        ClassSection classSection = classSectionRepository.findById(classSectionId)
+                .orElseThrow(() -> new AppException(ErrorCode.CLASS_SECTION_NOT_FOUND));
+
+        checkTeacherPermission(user, classSection);
+
+        Announcement announcement = announcementRepository.findById(announcementId)
+                .orElseThrow(() -> new RuntimeException("Announcement not found"));
+
+        announcementRepository.delete(announcement);
+    }
 }

@@ -26,3 +26,8 @@ jwt:
   signerKey: "32ByteLongSecretSignerKeyForSchoolManagementSystem2026!!!"
   validDuration: 86400 # 24 hours
   refreshableDuration: 2592000 # 30 days
+
+cloudinary:
+  cloud_name: ${CLOUDINARY_CLOUD_NAME:bl3xlplj}
+  api_key: ${CLOUDINARY_API_KEY:826916337714229}
+  api_secret: ${CLOUDINARY_API_SECRET:R_gVqkAxZvjxhd1tBC4ju5wg5f8}

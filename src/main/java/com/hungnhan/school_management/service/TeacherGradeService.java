@@ -9,4 +9,6 @@ public interface TeacherGradeService {
     void configureGradeWeights(String username, Long classSectionId, GradeConfigRequest request);
 
     PageResponse<FinalGradeResponse> getFinalGrades(String username, Long classSectionId, int page, int size);
+
+    void updateStudentGrades(String username, Long classSectionId, java.util.List<com.hungnhan.school_management.dto.request.TeacherGradeUpdateRequest> requests);
 }

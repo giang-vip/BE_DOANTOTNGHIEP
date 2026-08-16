@@ -15,6 +15,7 @@ import com.hungnhan.school_management.repository.LearningMaterialRepository;
 import com.hungnhan.school_management.repository.TeacherRepository;
 import com.hungnhan.school_management.repository.UserRepository;
 import com.hungnhan.school_management.service.TeacherMaterialService;
+import com.hungnhan.school_management.service.FileUploadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,6 +39,7 @@ public class TeacherMaterialServiceImpl implements TeacherMaterialService {
     private final UserRepository userRepository;
     private final TeacherRepository teacherRepository;
     private final LearningMaterialMapper learningMaterialMapper;
+    private final FileUploadService fileUploadService;
 
     private User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
@@ -100,6 +102,11 @@ public class TeacherMaterialServiceImpl implements TeacherMaterialService {
                 .orElseThrow(() -> new AppException(ErrorCode.MATERIAL_NOT_FOUND));
 
         checkTeacherPermission(user, material.getClassSection());
+
+        // Xóa file trên Cloudinary trước khi xóa record DB
+        if (material.getFileUrl() != null && !material.getFileUrl().isEmpty()) {
+            fileUploadService.deleteFileFromCloudinary(material.getFileUrl());
+        }
 
         learningMaterialRepository.delete(material);
     }

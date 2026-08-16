@@ -11,4 +11,6 @@ public interface StudentClassResourceService {
     List<AttendanceRecordResponse> getMyAttendance(String username, Long classSectionId);
 
     PageResponse<LearningMaterialResponse> getMyMaterials(String username, Long classSectionId, int page, int size);
+
+    AttendanceRecordResponse checkIn(String username, Long classSectionId, Long sessionId);
 }

@@ -80,4 +80,18 @@ public class AttendanceController {
                 .result(attendanceService.updateAttendanceRecord(username, recordId, request))
                 .build();
     }
+
+    @PatchMapping("/attendance-sessions/{sessionId}/status")
+    @Operation(summary = "Cập nhật trạng thái phiên điểm danh (API_TC_14)")
+    public ApiResponse<AttendanceSessionResponse> updateSessionStatus(
+            @PathVariable Long sessionId,
+            @RequestParam String status
+    ) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        return ApiResponse.<AttendanceSessionResponse>builder()
+                .result(attendanceService.updateSessionStatus(username, sessionId, status))
+                .build();
+    }
 }

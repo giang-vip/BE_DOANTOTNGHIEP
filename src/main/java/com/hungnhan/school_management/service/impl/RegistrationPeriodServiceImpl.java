@@ -76,4 +76,13 @@ public class RegistrationPeriodServiceImpl implements RegistrationPeriodService 
                 .isOpen(p.getIsOpen())
                 .build();
     }
+
+    @Override
+    @Transactional
+    public void deleteRegistrationPeriod(Long id) {
+        if (!registrationPeriodRepository.existsById(id)) {
+            throw new RuntimeException("Registration period not found");
+        }
+        registrationPeriodRepository.deleteById(id);
+    }
 }

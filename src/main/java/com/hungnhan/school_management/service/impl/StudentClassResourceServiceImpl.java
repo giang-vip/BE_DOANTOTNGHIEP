@@ -4,6 +4,7 @@ import com.hungnhan.school_management.dto.response.AttendanceRecordResponse;
 import com.hungnhan.school_management.dto.response.LearningMaterialResponse;
 import com.hungnhan.school_management.dto.response.PageResponse;
 import com.hungnhan.school_management.entity.*;
+import com.hungnhan.school_management.constant.SessionStatus;
 import com.hungnhan.school_management.exception.AppException;
 import com.hungnhan.school_management.exception.ErrorCode;
 import com.hungnhan.school_management.mapper.AttendanceMapper;
@@ -33,6 +34,7 @@ public class StudentClassResourceServiceImpl implements StudentClassResourceServ
     private final EnrollmentRepository enrollmentRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final LearningMaterialRepository learningMaterialRepository;
+    private final AttendanceSessionRepository attendanceSessionRepository;
     private final AttendanceMapper attendanceMapper;
     private final LearningMaterialMapper learningMaterialMapper;
 
@@ -83,5 +85,28 @@ public class StudentClassResourceServiceImpl implements StudentClassResourceServ
                 .totalPages(materialPage.getTotalPages())
                 .last(materialPage.isLast())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public AttendanceRecordResponse checkIn(String username, Long classSectionId, Long sessionId) {
+        Student student = getStudentByUsername(username);
+        Enrollment enrollment = getEnrollmentOrThrow(student, classSectionId);
+
+        AttendanceSession session = attendanceSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new AppException(ErrorCode.SESSION_NOT_FOUND));
+
+        if (session.getStatus() != SessionStatus.OPEN) {
+            throw new AppException(ErrorCode.INVALID_INPUT);
+        }
+
+        AttendanceRecord record = attendanceRecordRepository.findByAttendanceSessionIdAndEnrollmentId(sessionId, enrollment.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.RECORD_NOT_FOUND));
+
+        record.setStatus(AttendanceRecord.AttendanceStatus.PRESENT);
+        record.setCheckedAt(java.time.LocalDateTime.now());
+        record.setCheckedBy(student.getUser());
+
+        return attendanceMapper.toAttendanceRecordResponse(attendanceRecordRepository.save(record));
     }
 }

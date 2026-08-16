@@ -22,6 +22,7 @@ public interface ClassSectionMapper {
     @Mapping(source = "major.name", target = "majorName")
     @Mapping(source = "subject.id", target = "subjectId")
     @Mapping(source = "subject.name", target = "subjectName")
+    @Mapping(source = "subject.credits", target = "credits")
     @Mapping(source = "teacher.id", target = "teacherId")
     @Mapping(source = "teacher.fullName", target = "teacherName")
     @Mapping(source = "semester.id", target = "semesterId")

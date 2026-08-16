@@ -50,4 +50,19 @@ public class TeacherGradeController {
                 .result(teacherGradeService.getFinalGrades(username, classSectionId, page, size))
                 .build();
     }
+
+    @PutMapping("/classes/{classSectionId}/grades")
+    @Operation(summary = "Nhập/Cập nhật điểm cho sinh viên lớp học phần (API_TC_21)")
+    public ApiResponse<String> updateStudentGrades(
+            @PathVariable Long classSectionId,
+            @RequestBody @Valid java.util.List<com.hungnhan.school_management.dto.request.TeacherGradeUpdateRequest> requests
+    ) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        teacherGradeService.updateStudentGrades(username, classSectionId, requests);
+        return ApiResponse.<String>builder()
+                .result("Cập nhật điểm thành công")
+                .build();
+    }
 }

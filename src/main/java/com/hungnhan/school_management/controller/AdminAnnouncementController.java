@@ -39,6 +39,17 @@ public class AdminAnnouncementController {
                 .build();
     }
 
+    @PutMapping("/{id}")
+    @Operation(summary = "Cập nhật thông báo")
+    public ApiResponse<AdminAnnouncementResponse> updateAnnouncement(
+            @PathVariable Long id, 
+            @RequestBody @Valid AdminAnnouncementRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return ApiResponse.<AdminAnnouncementResponse>builder()
+                .result(announcementService.updateAnnouncement(id, request, auth.getName()))
+                .build();
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Xóa thông báo")
     public ApiResponse<Void> deleteAnnouncement(@PathVariable Long id) {

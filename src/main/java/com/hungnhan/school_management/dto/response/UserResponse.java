@@ -23,4 +23,16 @@ public class UserResponse {
     private Set<Role> roles;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // Additional Profile details
+    private String studentCode;
+    private String majorName;
+    private String schoolClassName;
+    private java.math.BigDecimal gpa;
+    private Integer totalCredits;
+    private String dateOfBirth;
+
+    private String teacherCode;
+    private String departmentName;
+    private String title;
 }

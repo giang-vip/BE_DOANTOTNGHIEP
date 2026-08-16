@@ -13,6 +13,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import com.hungnhan.school_management.service.FileUploadService;
+
 @RestController
 @RequestMapping("/api/teacher")
 @RequiredArgsConstructor
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class TeacherMaterialController {
 
     private final TeacherMaterialService teacherMaterialService;
+    private final FileUploadService fileUploadService;
 
     @GetMapping("/classes/{classSectionId}/materials")
     @Operation(summary = "Danh sách học liệu đã đăng (API_TC_07)")
@@ -36,18 +39,30 @@ public class TeacherMaterialController {
                 .build();
     }
 
-    @PostMapping("/classes/{classSectionId}/materials")
+    @PostMapping(value = "/classes/{classSectionId}/materials", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Tải lên học liệu môn học (API_TC_08)")
     public ApiResponse<LearningMaterialResponse> uploadMaterial(
             @PathVariable Long classSectionId,
-            @RequestBody @Valid LearningMaterialRequest request
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            @RequestParam("title") String title
     ) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        return ApiResponse.<LearningMaterialResponse>builder()
-                .result(teacherMaterialService.uploadMaterial(username, classSectionId, request))
-                .build();
+        try {
+            String fileUrl = fileUploadService.uploadFile(file);
+            LearningMaterialRequest request = LearningMaterialRequest.builder()
+                    .title(title)
+                    .fileName(file.getOriginalFilename())
+                    .fileUrl(fileUrl)
+                    .mimeType(file.getContentType())
+                    .build();
+            return ApiResponse.<LearningMaterialResponse>builder()
+                    .result(teacherMaterialService.uploadMaterial(username, classSectionId, request))
+                    .build();
+        } catch (java.io.IOException e) {
+            throw new com.hungnhan.school_management.exception.AppException(com.hungnhan.school_management.exception.ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
     }
 
     @DeleteMapping("/materials/{id}")
@@ -60,5 +75,20 @@ public class TeacherMaterialController {
         return ApiResponse.<String>builder()
                 .result("Học liệu đã được xóa thành công")
                 .build();
+    }
+
+    @PostMapping(value = "/upload", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Tải lên tệp tin chung (PDF/Ảnh) lên Cloudinary")
+    public ApiResponse<String> uploadFile(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file
+    ) {
+        try {
+            String fileUrl = fileUploadService.uploadFile(file);
+            return ApiResponse.<String>builder()
+                    .result(fileUrl)
+                    .build();
+        } catch (java.io.IOException e) {
+            throw new com.hungnhan.school_management.exception.AppException(com.hungnhan.school_management.exception.ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
     }
 }

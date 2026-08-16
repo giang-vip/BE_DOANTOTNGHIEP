@@ -14,6 +14,7 @@ import com.hungnhan.school_management.constant.SubmissionStatus;
 import com.hungnhan.school_management.mapper.AssignmentMapper;
 import com.hungnhan.school_management.repository.*;
 import com.hungnhan.school_management.service.TeacherAssignmentService;
+import com.hungnhan.school_management.service.FileUploadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,15 +29,18 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class TeacherAssignmentServiceImpl implements TeacherAssignmentService {
 
     private final AssignmentRepository assignmentRepository;
     private final SubmissionRepository submissionRepository;
     private final QuizQuestionRepository quizQuestionRepository;
+    private final QuizAnswerRepository quizAnswerRepository;
     private final ClassSectionRepository classSectionRepository;
     private final UserRepository userRepository;
     private final TeacherRepository teacherRepository;
     private final AssignmentMapper assignmentMapper;
+    private final FileUploadService fileUploadService;
 
     private User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
@@ -78,6 +82,7 @@ public class TeacherAssignmentServiceImpl implements TeacherAssignmentService {
     }
 
     @Override
+    @Transactional
     public AssignmentResponse createAssignment(String username, Long classSectionId, AssignmentRequest request) {
         User user = getUserByUsername(username);
         ClassSection classSection = classSectionRepository.findById(classSectionId)
@@ -100,12 +105,16 @@ public class TeacherAssignmentServiceImpl implements TeacherAssignmentService {
     }
 
     @Override
+    @Transactional
     public AssignmentResponse updateAssignment(String username, Long id, AssignmentRequest request) {
         User user = getUserByUsername(username);
         Assignment assignment = assignmentRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ASSIGNMENT_NOT_FOUND));
 
         checkTeacherPermission(user, assignment.getClassSection());
+
+        // Ghi lại URL file cũ trước khi map dữ liệu mới
+        String oldFileUrl = assignment.getExamFileUrl();
 
         assignmentMapper.updateAssignment(assignment, request);
         
@@ -116,16 +125,47 @@ public class TeacherAssignmentServiceImpl implements TeacherAssignmentService {
             assignment.setExamFileType(Assignment.ExamFileType.valueOf(request.getExamFileType()));
         }
 
+        // Nếu cập nhật file mới khác file cũ, xóa file cũ trên Cloudinary
+        String newFileUrl = assignment.getExamFileUrl();
+        if (oldFileUrl != null && !oldFileUrl.isEmpty() && !oldFileUrl.equals(newFileUrl)) {
+            try {
+                fileUploadService.deleteFileFromCloudinary(oldFileUrl);
+            } catch (Exception e) {
+                log.warn("Failed to delete old file from Cloudinary: {}", e.getMessage());
+            }
+        }
+
         return assignmentMapper.toAssignmentResponse(assignmentRepository.save(assignment));
     }
 
     @Override
+    @Transactional
     public void deleteAssignment(String username, Long id) {
         User user = getUserByUsername(username);
         Assignment assignment = assignmentRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ASSIGNMENT_NOT_FOUND));
 
         checkTeacherPermission(user, assignment.getClassSection());
+
+        // Xóa file đề thi trên Cloudinary trước khi xóa bài tập khỏi DB
+        if (assignment.getExamFileUrl() != null && !assignment.getExamFileUrl().isEmpty()) {
+            try {
+                fileUploadService.deleteFileFromCloudinary(assignment.getExamFileUrl());
+            } catch (Exception e) {
+                log.warn("Failed to delete file from Cloudinary: {}", e.getMessage());
+            }
+        }
+
+        // Delete all submissions and their associated quiz answers
+        List<Submission> submissions = submissionRepository.findByAssignmentId(id, Pageable.unpaged()).getContent();
+        for (Submission sub : submissions) {
+            quizAnswerRepository.deleteBySubmissionId(sub.getId());
+        }
+        submissionRepository.deleteAll(submissions);
+        
+        // Delete all quiz questions
+        List<QuizQuestion> questions = quizQuestionRepository.findByAssignmentIdOrderByOrderIndexAsc(id);
+        quizQuestionRepository.deleteAll(questions);
 
         assignmentRepository.delete(assignment);
     }
@@ -186,6 +226,7 @@ public class TeacherAssignmentServiceImpl implements TeacherAssignmentService {
     }
 
     @Override
+    @Transactional
     public SubmissionResponse gradeSubmission(String username, Long submissionId, SubmissionGradeRequest request) {
         User user = getUserByUsername(username);
         Submission submission = submissionRepository.findById(submissionId)
@@ -198,5 +239,19 @@ public class TeacherAssignmentServiceImpl implements TeacherAssignmentService {
         submission.setStatus(SubmissionStatus.GRADED);
 
         return assignmentMapper.toSubmissionResponse(submissionRepository.save(submission));
+    }
+
+    @Override
+    public List<QuizQuestionResponse> getQuizQuestions(String username, Long assignmentId) {
+        User user = getUserByUsername(username);
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new AppException(ErrorCode.ASSIGNMENT_NOT_FOUND));
+
+        checkTeacherPermission(user, assignment.getClassSection());
+
+        List<QuizQuestion> questions = quizQuestionRepository.findByAssignmentIdOrderByOrderIndexAsc(assignmentId);
+        return questions.stream()
+                .map(assignmentMapper::toQuizQuestionResponse)
+                .collect(Collectors.toList());
     }
 }

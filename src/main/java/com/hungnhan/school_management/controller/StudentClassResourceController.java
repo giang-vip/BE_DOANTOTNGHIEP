@@ -33,6 +33,20 @@ public class StudentClassResourceController {
                 .build();
     }
 
+    @PostMapping("/attendance/{sessionId}/checkin")
+    @Operation(summary = "Sinh viên tự điểm danh khi phiên mở")
+    public ApiResponse<AttendanceRecordResponse> checkIn(
+            @PathVariable Long classSectionId,
+            @PathVariable Long sessionId
+    ) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        return ApiResponse.<AttendanceRecordResponse>builder()
+                .result(studentClassResourceService.checkIn(username, classSectionId, sessionId))
+                .build();
+    }
+
     @GetMapping("/materials")
     @Operation(summary = "Danh sách học liệu của lớp (API_ST_04 & API_ST_05)")
     public ApiResponse<PageResponse<LearningMaterialResponse>> getMyMaterials(

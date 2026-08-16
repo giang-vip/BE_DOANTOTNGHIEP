@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class StudentAssignmentController {
 
     private final StudentAssignmentService studentAssignmentService;
+    private final com.hungnhan.school_management.service.FileUploadService fileUploadService;
 
     @GetMapping("/classes/{classSectionId}/assignments")
     @Operation(summary = "Xem danh sách bài tập của lớp (API_ST_06)")
@@ -60,5 +61,16 @@ public class StudentAssignmentController {
         return ApiResponse.<SubmissionResponse>builder()
                 .result(studentAssignmentService.getMySubmission(username, assignmentId))
                 .build();
+    }
+
+    @PostMapping(value = "/upload", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload file (API_ST_UPLOAD)")
+    public ApiResponse<String> uploadFile(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            String url = fileUploadService.uploadFile(file);
+            return ApiResponse.<String>builder().result(url).build();
+        } catch (java.io.IOException e) {
+            throw new com.hungnhan.school_management.exception.AppException(com.hungnhan.school_management.exception.ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
     }
 }

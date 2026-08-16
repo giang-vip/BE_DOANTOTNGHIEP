@@ -22,6 +22,8 @@ public interface TeacherAssignmentService {
 
     List<QuizQuestionResponse> configureQuiz(String username, Long assignmentId, List<QuizQuestionRequest> requests);
 
+    List<QuizQuestionResponse> getQuizQuestions(String username, Long assignmentId);
+
     PageResponse<SubmissionResponse> getSubmissions(String username, Long assignmentId, int page, int size);
 
     SubmissionResponse gradeSubmission(String username, Long submissionId, SubmissionGradeRequest request);

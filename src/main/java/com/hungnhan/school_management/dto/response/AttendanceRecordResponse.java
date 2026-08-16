@@ -20,4 +20,7 @@ public class AttendanceRecordResponse {
     private LocalDateTime checkedAt;
     private Long checkedById;
     private String checkedByUsername;
+    private String sessionTitle;
+    private java.time.LocalDate sessionDate;
+    private String sessionStatus;
 }

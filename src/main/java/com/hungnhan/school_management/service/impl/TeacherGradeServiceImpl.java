@@ -145,4 +145,36 @@ public class TeacherGradeServiceImpl implements TeacherGradeService {
         if (val >= 4.0) return "D";
         return "F";
     }
+
+    @Override
+    @Transactional
+    public void updateStudentGrades(String username, Long classSectionId, List<com.hungnhan.school_management.dto.request.TeacherGradeUpdateRequest> requests) {
+        User user = getUserByUsername(username);
+        ClassSection classSection = classSectionRepository.findById(classSectionId)
+                .orElseThrow(() -> new AppException(ErrorCode.CLASS_SECTION_NOT_FOUND));
+
+        checkTeacherPermission(user, classSection);
+
+        for (com.hungnhan.school_management.dto.request.TeacherGradeUpdateRequest req : requests) {
+            Enrollment enrollment = enrollmentRepository.findById(req.getEnrollmentId())
+                    .orElseThrow(() -> new AppException(ErrorCode.RECORD_NOT_FOUND));
+
+            if (!enrollment.getClassSection().getId().equals(classSectionId)) {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+
+            if (req.getAttendanceScore() != null) {
+                enrollment.setAttendanceScore(req.getAttendanceScore());
+            }
+            if (req.getMidtermScore() != null) {
+                enrollment.setMidtermScore(req.getMidtermScore());
+            }
+            if (req.getFinalExamScore() != null) {
+                enrollment.setFinalExamScore(req.getFinalExamScore());
+            }
+
+            // Recalculate and save final score immediately
+            calculateFinalGradeAndMap(enrollment);
+        }
+    }
 }

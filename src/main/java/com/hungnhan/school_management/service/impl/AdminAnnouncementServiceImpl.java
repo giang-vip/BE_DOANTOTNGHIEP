@@ -41,12 +41,27 @@ public class AdminAnnouncementServiceImpl implements AdminAnnouncementService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AdminAnnouncementResponse> getAllAnnouncements() {
         // Find announcements that have no classSection (global announcements)
         return announcementRepository.findAll().stream()
                 .filter(a -> a.getClassSection() == null)
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public AdminAnnouncementResponse updateAnnouncement(Long id, AdminAnnouncementRequest request, String username) {
+        Announcement announcement = announcementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Announcement not found"));
+
+        announcement.setTitle(request.getTitle());
+        announcement.setContent(request.getContent());
+        announcement.setRecipientGroup(request.getRecipientGroup() != null ? request.getRecipientGroup() : "all");
+
+        announcement = announcementRepository.save(announcement);
+        return mapToResponse(announcement);
     }
 
     @Override

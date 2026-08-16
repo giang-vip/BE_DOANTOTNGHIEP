@@ -50,4 +50,11 @@ public class RegistrationPeriodController {
         registrationPeriodService.toggleRegistrationPeriod(id, isOpen);
         return ApiResponse.<Void>builder().build();
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Xóa cấu hình thời gian đăng ký")
+    public ApiResponse<Void> delete(@PathVariable Long id) {
+        registrationPeriodService.deleteRegistrationPeriod(id);
+        return ApiResponse.<Void>builder().build();
+    }
 }

@@ -17,4 +17,6 @@ public interface AttendanceService {
     List<AttendanceRecordResponse> getAttendanceRecords(String username, Long sessionId);
     
     AttendanceRecordResponse updateAttendanceRecord(String username, Long recordId, AttendanceRecordRequest request);
+
+    AttendanceSessionResponse updateSessionStatus(String username, Long sessionId, String status);
 }

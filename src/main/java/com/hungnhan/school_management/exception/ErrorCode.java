@@ -56,7 +56,8 @@ public enum ErrorCode {
     SUBMISSION_NOT_FOUND(1049, "Không tìm thấy bài nộp", HttpStatus.NOT_FOUND),
     QUIZ_QUESTION_NOT_FOUND(1050, "Không tìm thấy câu hỏi trắc nghiệm", HttpStatus.NOT_FOUND),
     INVALID_WEIGHT_SUM(1051, "Tổng trọng số phải bằng 100", HttpStatus.BAD_REQUEST),
-    CANNOT_DELETE_ADMIN(1052, "Không thể tự xóa admin", HttpStatus.BAD_REQUEST);
+    CANNOT_DELETE_ADMIN(1052, "Không thể tự xóa admin", HttpStatus.BAD_REQUEST),
+    INVALID_INPUT(1053, "Dữ liệu đầu vào không hợp lệ", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String message;

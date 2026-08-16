@@ -124,4 +124,17 @@ public class TeacherAssignmentController {
                 .result(teacherAssignmentService.gradeSubmission(username, id, request))
                 .build();
     }
+
+    @GetMapping("/assignments/{id}/quiz-questions")
+    @Operation(summary = "Xem danh sách câu hỏi trắc nghiệm đã cấu hình (API_TC_22)")
+    public ApiResponse<List<QuizQuestionResponse>> getQuizQuestions(
+            @PathVariable Long id
+    ) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        return ApiResponse.<List<QuizQuestionResponse>>builder()
+                .result(teacherAssignmentService.getQuizQuestions(username, id))
+                .build();
+    }
 }

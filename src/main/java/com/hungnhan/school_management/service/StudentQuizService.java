@@ -11,4 +11,6 @@ public interface StudentQuizService {
     QuizResultResponse submitQuiz(String username, Long assignmentId, QuizSubmissionRequest request);
 
     QuizResultResponse getQuizResult(String username, Long assignmentId);
+
+    java.util.List<com.hungnhan.school_management.dto.response.QuizQuestionResponse> getQuizQuestionsForStudent(String username, Long assignmentId);
 }

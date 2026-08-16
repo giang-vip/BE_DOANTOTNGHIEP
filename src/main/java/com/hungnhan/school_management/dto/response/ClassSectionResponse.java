@@ -29,7 +29,12 @@ public class ClassSectionResponse {
     private LocalDate startDate;
     private LocalDate endDate;
     private Integer capacity;
+    private Integer credits;
     private SectionStatus status;
     private Long semesterId;
     private String semesterCode;
+    private Integer attendanceWeight;
+    private Integer midtermWeight;
+    private Integer finalWeight;
+    private Integer enrolledCount;
 }

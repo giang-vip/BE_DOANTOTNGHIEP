@@ -32,5 +32,8 @@ public interface AttendanceMapper {
     @Mapping(source = "enrollment.student.fullName", target = "studentName")
     @Mapping(source = "checkedBy.id", target = "checkedById")
     @Mapping(source = "checkedBy.username", target = "checkedByUsername")
+    @Mapping(source = "attendanceSession.title", target = "sessionTitle")
+    @Mapping(source = "attendanceSession.sessionDate", target = "sessionDate")
+    @Mapping(source = "attendanceSession.status", target = "sessionStatus")
     AttendanceRecordResponse toAttendanceRecordResponse(AttendanceRecord record);
 }

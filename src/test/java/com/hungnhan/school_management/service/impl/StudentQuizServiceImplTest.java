@@ -89,7 +89,7 @@ public class StudentQuizServiceImplTest {
         mockSubmission.setId(300L);
         mockSubmission.setAssignment(mockAssignment);
         mockSubmission.setEnrollment(mockEnrollment);
-        mockSubmission.setStatus(SubmissionStatus.IN_PROGRESS);
+        mockSubmission.setStatus(SubmissionStatus.PENDING);
 
         mockQuestion1 = new QuizQuestion();
         mockQuestion1.setId(400L);

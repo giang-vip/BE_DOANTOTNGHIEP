@@ -15,7 +15,7 @@ public class GlobalExceptionHandler {
         exception.printStackTrace(); // In ra stack trace trong console để dễ debug
         ApiResponse<Object> apiResponse = ApiResponse.builder()
                 .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
-                .message(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage())
+                .message(exception.getMessage() != null ? "Lỗi hệ thống: " + exception.getMessage() : ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage())
                 .build();
         return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getHttpStatus()).body(apiResponse);
     }

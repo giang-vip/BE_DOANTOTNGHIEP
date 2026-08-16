@@ -25,5 +25,17 @@ public class AuthResponse {
         private String email;
         private String fullName;
         private String avatarUrl;
+        
+        // Additional Profile details
+        private String studentCode;
+        private String majorName;
+        private String schoolClassName;
+        private java.math.BigDecimal gpa;
+        private Integer totalCredits;
+        private String dateOfBirth;
+
+        private String teacherCode;
+        private String departmentName;
+        private String title;
     }
 }

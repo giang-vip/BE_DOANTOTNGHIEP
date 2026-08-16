@@ -14,6 +14,8 @@ import java.util.Optional;
 public interface SemesterRepository extends JpaRepository<Semester, Long> {
     Optional<Semester> findByAcademicYearIdAndCode(Long academicYearId, String code);
 
+    Optional<Semester> findByIsCurrentTrue();
+
     boolean existsByAcademicYearIdAndCode(Long academicYearId, String code);
 
     @Query("SELECT s FROM Semester s WHERE (:academicYearId IS NULL OR s.academicYear.id = :academicYearId) " +

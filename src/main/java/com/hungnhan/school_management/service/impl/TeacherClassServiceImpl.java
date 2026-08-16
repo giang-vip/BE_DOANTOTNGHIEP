@@ -13,6 +13,7 @@ import com.hungnhan.school_management.mapper.ClassSectionMapper;
 import com.hungnhan.school_management.mapper.EnrollmentMapper;
 import com.hungnhan.school_management.repository.ClassSectionRepository;
 import com.hungnhan.school_management.repository.EnrollmentRepository;
+import com.hungnhan.school_management.repository.SemesterRepository;
 import com.hungnhan.school_management.repository.TeacherRepository;
 import com.hungnhan.school_management.repository.UserRepository;
 import com.hungnhan.school_management.service.TeacherClassService;
@@ -38,6 +39,7 @@ public class TeacherClassServiceImpl implements TeacherClassService {
     private final TeacherRepository teacherRepository;
     private final ClassSectionRepository classSectionRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final SemesterRepository semesterRepository;
     private final ClassSectionMapper classSectionMapper;
     private final EnrollmentMapper enrollmentMapper;
 
@@ -52,8 +54,15 @@ public class TeacherClassServiceImpl implements TeacherClassService {
     public PageResponse<ClassSectionResponse> getTeacherClassSections(String username, String search, Long semesterId, int page, int size) {
         Teacher teacher = getTeacherByUsername(username);
         
+        Long actualSemesterId = semesterId;
+        if (actualSemesterId == null) {
+            actualSemesterId = semesterRepository.findByIsCurrentTrue()
+                .map(com.hungnhan.school_management.entity.Semester::getId)
+                .orElse(null);
+        }
+
         Pageable pageable = PageRequest.of(page, size);
-        Page<ClassSection> classSectionPage = classSectionRepository.searchTeacherClassSections(teacher.getId(), search, semesterId, pageable);
+        Page<ClassSection> classSectionPage = classSectionRepository.searchTeacherClassSections(teacher.getId(), search, actualSemesterId, pageable);
 
         List<ClassSectionResponse> content = classSectionPage.getContent().stream()
                 .map(classSectionMapper::toClassSectionResponse)

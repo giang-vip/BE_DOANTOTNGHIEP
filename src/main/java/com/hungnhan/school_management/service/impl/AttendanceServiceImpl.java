@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class AttendanceServiceImpl implements AttendanceService {
 
     private final AttendanceSessionRepository attendanceSessionRepository;
@@ -53,7 +54,9 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public PageResponse<AttendanceSessionResponse> getAttendanceSessions(String username, Long classSectionId, int page, int size) {
+    @Transactional(readOnly = true)
+    public PageResponse<AttendanceSessionResponse> getAttendanceSessions(String username, Long classSectionId, int page,
+            int size) {
         User user = getUserByUsername(username);
         ClassSection classSection = classSectionRepository.findById(classSectionId)
                 .orElseThrow(() -> new AppException(ErrorCode.CLASS_SECTION_NOT_FOUND));
@@ -61,7 +64,8 @@ public class AttendanceServiceImpl implements AttendanceService {
         checkTeacherPermission(user, classSection);
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<AttendanceSession> sessionPage = attendanceSessionRepository.findByClassSectionIdOrderBySessionDateDesc(classSectionId, pageable);
+        Page<AttendanceSession> sessionPage = attendanceSessionRepository
+                .findByClassSectionIdOrderBySessionDateDesc(classSectionId, pageable);
 
         List<AttendanceSessionResponse> content = sessionPage.getContent().stream()
                 .map(attendanceMapper::toAttendanceSessionResponse)
@@ -79,21 +83,23 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     @Transactional
-    public AttendanceSessionResponse createAttendanceSession(String username, Long classSectionId, AttendanceSessionRequest request) {
+    public AttendanceSessionResponse createAttendanceSession(String username, Long classSectionId,
+            AttendanceSessionRequest request) {
         User user = getUserByUsername(username);
         ClassSection classSection = classSectionRepository.findById(classSectionId)
                 .orElseThrow(() -> new AppException(ErrorCode.CLASS_SECTION_NOT_FOUND));
 
         checkTeacherPermission(user, classSection);
 
-        if (attendanceSessionRepository.existsByClassSectionIdAndSessionDate(classSectionId, request.getSessionDate())) {
+        if (attendanceSessionRepository.existsByClassSectionIdAndSessionDate(classSectionId,
+                request.getSessionDate())) {
             throw new AppException(ErrorCode.SESSION_EXISTED);
         }
 
         AttendanceSession session = attendanceMapper.toAttendanceSession(request);
         session.setClassSection(classSection);
         session.setCreatedBy(user);
-        
+
         if (request.getStatus() != null) {
             session.setStatus(SessionStatus.valueOf(request.getStatus()));
         }
@@ -103,23 +109,26 @@ public class AttendanceServiceImpl implements AttendanceService {
         // Tự động tạo record trống (ABSENT) cho tất cả sinh viên trong lớp
         Pageable unpaged = Pageable.unpaged(); // Lấy tất cả
         Page<Enrollment> enrollments = enrollmentRepository.searchEnrollments(null, classSectionId, unpaged);
-        
+
         List<AttendanceRecord> records = new ArrayList<>();
         for (Enrollment enrollment : enrollments.getContent()) {
-            AttendanceRecord record = AttendanceRecord.builder()
-                    .attendanceSession(savedSession)
-                    .enrollment(enrollment)
-                    .status(AttendanceRecord.AttendanceStatus.ABSENT) // Mặc định là vắng mặt, GV sẽ điểm danh sau
-                    .build();
-            records.add(record);
+            if (enrollment.getStatus() == com.hungnhan.school_management.constant.EnrollmentStatus.ACTIVE) {
+                AttendanceRecord record = AttendanceRecord.builder()
+                        .attendanceSession(savedSession)
+                        .enrollment(enrollment)
+                        .status(AttendanceRecord.AttendanceStatus.ABSENT) // Mặc định là vắng mặt, GV sẽ điểm danh sau
+                        .build();
+                records.add(record);
+            }
         }
-        
+
         attendanceRecordRepository.saveAll(records);
 
         return attendanceMapper.toAttendanceSessionResponse(savedSession);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AttendanceRecordResponse> getAttendanceRecords(String username, Long sessionId) {
         User user = getUserByUsername(username);
         AttendanceSession session = attendanceSessionRepository.findById(sessionId)
@@ -128,14 +137,16 @@ public class AttendanceServiceImpl implements AttendanceService {
         checkTeacherPermission(user, session.getClassSection());
 
         List<AttendanceRecord> records = attendanceRecordRepository.findByAttendanceSessionId(sessionId);
-        
+
         return records.stream()
                 .map(attendanceMapper::toAttendanceRecordResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public AttendanceRecordResponse updateAttendanceRecord(String username, Long recordId, AttendanceRecordRequest request) {
+    @Transactional
+    public AttendanceRecordResponse updateAttendanceRecord(String username, Long recordId,
+            AttendanceRecordRequest request) {
         User user = getUserByUsername(username);
         AttendanceRecord record = attendanceRecordRepository.findById(recordId)
                 .orElseThrow(() -> new AppException(ErrorCode.RECORD_NOT_FOUND));
@@ -148,5 +159,23 @@ public class AttendanceServiceImpl implements AttendanceService {
         record.setCheckedBy(user);
 
         return attendanceMapper.toAttendanceRecordResponse(attendanceRecordRepository.save(record));
+    }
+
+    @Override
+    @Transactional
+    public AttendanceSessionResponse updateSessionStatus(String username, Long sessionId, String status) {
+        User user = getUserByUsername(username);
+        AttendanceSession session = attendanceSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new AppException(ErrorCode.SESSION_NOT_FOUND));
+
+        checkTeacherPermission(user, session.getClassSection());
+
+        try {
+            session.setStatus(SessionStatus.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new AppException(ErrorCode.INVALID_INPUT);
+        }
+
+        return attendanceMapper.toAttendanceSessionResponse(attendanceSessionRepository.save(session));
     }
 }

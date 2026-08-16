@@ -1,5 +1,7 @@
 package com.hungnhan.school_management.service.impl;
 
+import com.hungnhan.school_management.dto.response.QuizQuestionResponse;
+
 import com.hungnhan.school_management.constant.SubmissionStatus;
 import com.hungnhan.school_management.dto.request.QuizAnswerRequest;
 import com.hungnhan.school_management.dto.request.QuizSubmissionRequest;
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class StudentQuizServiceImpl implements StudentQuizService {
 
     private final UserRepository userRepository;
@@ -74,7 +77,7 @@ public class StudentQuizServiceImpl implements StudentQuizService {
         Submission submission = Submission.builder()
                 .assignment(assignment)
                 .enrollment(enrollment)
-                .status(SubmissionStatus.IN_PROGRESS)
+                .status(SubmissionStatus.PENDING)
                 .build();
 
         return assignmentMapper.toSubmissionResponse(submissionRepository.save(submission));
@@ -151,6 +154,7 @@ public class StudentQuizServiceImpl implements StudentQuizService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public QuizResultResponse getQuizResult(String username, Long assignmentId) {
         Student student = getStudentByUsername(username);
         Assignment assignment = assignmentRepository.findById(assignmentId)
@@ -170,9 +174,9 @@ public class StudentQuizServiceImpl implements StudentQuizService {
                     .orderIndex(q.getOrderIndex())
                     .questionText(q.getQuestionText())
                     .selectedChoice(qa.getSelectedChoice() != null ? qa.getSelectedChoice().name() : null)
-                    .correctChoice(q.getCorrectChoice().name())
-                    .isCorrect(qa.getIsCorrect())
-                    .pointsAwarded(qa.getIsCorrect() ? q.getPoints() : BigDecimal.ZERO)
+                    .correctChoice(q.getCorrectChoice() != null ? q.getCorrectChoice().name() : null)
+                    .isCorrect(qa.getIsCorrect() != null ? qa.getIsCorrect() : false)
+                    .pointsAwarded((qa.getIsCorrect() != null && qa.getIsCorrect()) ? q.getPoints() : BigDecimal.ZERO)
                     .explanationText(q.getExplanationText())
                     .build();
         }).collect(Collectors.toList());
@@ -186,5 +190,38 @@ public class StudentQuizServiceImpl implements StudentQuizService {
                 .submittedAt(submission.getSubmittedAt())
                 .answers(answerResponses)
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<QuizQuestionResponse> getQuizQuestionsForStudent(String username, Long assignmentId) {
+        Student student = getStudentByUsername(username);
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new AppException(ErrorCode.ASSIGNMENT_NOT_FOUND));
+
+        if (assignment.getType() != Assignment.AssignmentType.quiz) {
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+
+        // Kiem tra quyen truy cap
+        getEnrollmentOrThrow(student, assignment.getClassSection().getId());
+
+        List<QuizQuestion> questions = quizQuestionRepository.findByAssignmentIdOrderByOrderIndexAsc(assignmentId);
+        
+        return questions.stream().map(q -> QuizQuestionResponse.builder()
+                .id(q.getId())
+                .assignmentId(assignmentId)
+                .orderIndex(q.getOrderIndex())
+                .questionText(q.getQuestionText())
+                .choiceAText(q.getChoiceAText())
+                .choiceBText(q.getChoiceBText())
+                .choiceCText(q.getChoiceCText())
+                .choiceDText(q.getChoiceDText())
+                .points(q.getPoints())
+                // SET NULL DE CHONG GIAN LAN
+                .correctChoice(null)
+                .explanationText(null)
+                .build()
+        ).collect(Collectors.toList());
     }
 }
