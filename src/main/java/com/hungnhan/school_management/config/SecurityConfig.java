@@ -42,13 +42,18 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/api/admin/subjects/debug").permitAll()
+                        // Cho phép truy cập chung cho các API config cơ bản
+                        .requestMatchers("/api/admin/semesters/**").authenticated()
+                        .requestMatchers("/api/admin/academic-years/**").authenticated()
+                        .requestMatchers("/api/admin/config/registration-period/**").authenticated()
                         // API Admin yêu cầu role ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // API Teacher yêu cầu role TEACHER
                         .requestMatchers("/api/teacher/**").hasRole("TEACHER")
                         // API Student yêu cầu role STUDENT
                         .requestMatchers("/api/student/**").hasRole("STUDENT")
-                        // Cho phép các API common khác (như /api/auth/logout, /api/auth/me, /api/auth/change-password) truy cập nếu đã xác thực
+                        // Cho phép các API common khác truy cập nếu đã xác thực
                         .requestMatchers("/api/auth/**").authenticated()
                         .anyRequest().authenticated()
                 )

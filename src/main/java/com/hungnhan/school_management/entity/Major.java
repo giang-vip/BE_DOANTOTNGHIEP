@@ -34,12 +34,18 @@ public class Major {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "total_credits")
+    private Integer totalCredits;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private MajorStatus status = MajorStatus.ACTIVE;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @org.hibernate.annotations.Formula("(SELECT COUNT(ms.subject_id) FROM major_subjects ms WHERE ms.major_id = id)")
+    private Integer subjectCount;
 
     @PrePersist
     void prePersist() {

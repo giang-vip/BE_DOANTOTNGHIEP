@@ -15,6 +15,10 @@ public interface SubjectMapper {
 
     @Mapping(source = "department.id", target = "departmentId")
     @Mapping(source = "department.name", target = "departmentName")
+    @Mapping(target = "majorId", ignore = true)
+    @Mapping(target = "majorName", ignore = true)
+    @Mapping(target = "type", ignore = true)
+    @Mapping(target = "semesterIndex", ignore = true)
     SubjectResponse toSubjectResponse(Subject subject);
 
     @Mapping(target = "department", ignore = true)

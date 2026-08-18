@@ -140,8 +140,11 @@ public class TeacherGradeServiceImpl implements TeacherGradeService {
         if (score == null) return "";
         double val = score.doubleValue();
         if (val >= 8.5) return "A";
+        if (val >= 8.0) return "B+";
         if (val >= 7.0) return "B";
+        if (val >= 6.5) return "C+";
         if (val >= 5.5) return "C";
+        if (val >= 5.0) return "D+";
         if (val >= 4.0) return "D";
         return "F";
     }

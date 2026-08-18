@@ -9,7 +9,7 @@ public interface SubjectService {
 
     SubjectResponse updateSubject(Long id, SubjectRequest request);
 
-    PageResponse<SubjectResponse> getSubjects(String search, Long departmentId, int page, int size);
+    PageResponse<SubjectResponse> getSubjects(String search, Long departmentId, Long majorId, int page, int size);
 
     SubjectResponse getSubjectById(Long id);
 

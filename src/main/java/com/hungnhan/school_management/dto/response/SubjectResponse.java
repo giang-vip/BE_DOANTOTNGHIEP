@@ -14,5 +14,9 @@ public class SubjectResponse {
     private Integer credits;
     private Long departmentId;
     private String departmentName;
+    private Long majorId;
+    private String majorName;
+    private Integer semesterIndex;
+    private String type;
     private String description;
 }

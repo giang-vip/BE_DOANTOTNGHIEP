@@ -9,6 +9,7 @@ import com.hungnhan.school_management.exception.ErrorCode;
 import com.hungnhan.school_management.mapper.MajorMapper;
 import com.hungnhan.school_management.repository.DepartmentRepository;
 import com.hungnhan.school_management.repository.MajorRepository;
+import com.hungnhan.school_management.repository.SubjectRepository;
 import com.hungnhan.school_management.service.MajorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class MajorServiceImpl implements MajorService {
 
     private final MajorRepository majorRepository;
     private final DepartmentRepository departmentRepository;
+    private final SubjectRepository subjectRepository;
     private final MajorMapper majorMapper;
 
     @Override
@@ -83,10 +85,22 @@ public class MajorServiceImpl implements MajorService {
     @Override
     public PageResponse<MajorResponse> getAllMajors(String search, Long departmentId, int page, int size) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
-        org.springframework.data.domain.Page<Major> majorPage = majorRepository.searchMajors(search, departmentId, pageable);
+        org.springframework.data.domain.Page<Major> majorPage;
+        
+        if (departmentId != null && (search == null || search.trim().isEmpty())) {
+            majorPage = majorRepository.findByDepartmentId(departmentId, pageable);
+        } else {
+            majorPage = majorRepository.searchMajors(search, departmentId, pageable);
+        }
 
         List<MajorResponse> content = majorPage.getContent().stream()
-                .map(majorMapper::toMajorResponse)
+                .map(major -> {
+                    MajorResponse response = majorMapper.toMajorResponse(major);
+                    // Manually set subjectCount from repository query for reliability
+                    long count = subjectRepository.countByMajorId(major.getId());
+                    response.setSubjectCount((int) count);
+                    return response;
+                })
                 .collect(Collectors.toList());
 
         return PageResponse.<MajorResponse>builder()

@@ -27,6 +27,8 @@ public interface ClassSectionMapper {
     @Mapping(source = "teacher.fullName", target = "teacherName")
     @Mapping(source = "semester.id", target = "semesterId")
     @Mapping(source = "semester.code", target = "semesterCode")
+    @Mapping(target = "subjectSemesterIndex", ignore = true)
+    @Mapping(target = "subjectType", ignore = true)
     ClassSectionResponse toClassSectionResponse(ClassSection classSection);
 
     @Mapping(target = "department", ignore = true)

@@ -25,6 +25,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,6 +48,10 @@ public class StudentDashboardServiceImpl implements StudentDashboardService {
     private final AnnouncementMapper announcementMapper;
     private final EnrollmentMapper enrollmentMapper;
     private final AttendanceRecordRepository attendanceRecordRepository;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
+    private final MajorSubjectRepository majorSubjectRepository;
 
     private Student getStudentByUsername(String username) {
         User user = userRepository.findByUsername(username)
@@ -123,9 +129,10 @@ public class StudentDashboardServiceImpl implements StudentDashboardService {
     public PageResponse<ClassSectionResponse> getAvailableClasses(String username, String search, Long semesterId, int page, int size) {
         Student student = getStudentByUsername(username);
         Long majorId = student.getMajor() != null ? student.getMajor().getId() : null;
+        Long departmentId = student.getMajor() != null && student.getMajor().getDepartment() != null ? student.getMajor().getDepartment().getId() : null;
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<ClassSection> classSections = classSectionRepository.searchAvailableClassesForStudent(semesterId, majorId, search, pageable);
+        Page<ClassSection> classSections = classSectionRepository.searchAvailableClassesForStudent(semesterId, departmentId, majorId, search, pageable);
 
         List<ClassSectionResponse> content = classSections.getContent().stream()
                 .map(classSection -> {
@@ -143,6 +150,26 @@ public class StudentDashboardServiceImpl implements StudentDashboardService {
                 .totalPages(classSections.getTotalPages())
                 .last(classSections.isLast())
                 .build();
+    }
+
+    @Override
+    public List<com.hungnhan.school_management.dto.response.StudentCurriculumResponse> getStudentCurriculum(String username) {
+        Student student = getStudentByUsername(username);
+        
+        if (student.getMajor() == null) {
+            return java.util.Collections.emptyList();
+        }
+        
+        List<MajorSubject> curriculum = majorSubjectRepository.findByMajorId(student.getMajor().getId());
+        
+        return curriculum.stream().map(ms -> com.hungnhan.school_management.dto.response.StudentCurriculumResponse.builder()
+                .subjectId(ms.getSubject().getId())
+                .subjectCode(ms.getSubject().getCode())
+                .subjectName(ms.getSubject().getName())
+                .credits(ms.getSubject().getCredits())
+                .semesterIndex(ms.getRecommendedSemester())
+                .subjectType(ms.getSubjectType().name())
+                .build()).collect(Collectors.toList());
     }
 
     @Override
@@ -239,11 +266,24 @@ public class StudentDashboardServiceImpl implements StudentDashboardService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        // Delete associated attendance records first to avoid FK constraint violation
+        // Delete associated records to avoid FK constraint violation
         List<AttendanceRecord> records = attendanceRecordRepository.findByEnrollmentId(enrollment.getId());
         if (!records.isEmpty()) {
             attendanceRecordRepository.deleteAll(records);
         }
+
+        // Delete other related entities manually via EntityManager
+        entityManager.createQuery("DELETE FROM GradeComponentScore g WHERE g.enrollment.id = :id")
+                .setParameter("id", enrollment.getId())
+                .executeUpdate();
+                
+        entityManager.createQuery("DELETE FROM Grade g WHERE g.enrollment.id = :id")
+                .setParameter("id", enrollment.getId())
+                .executeUpdate();
+                
+        entityManager.createQuery("DELETE FROM Submission s WHERE s.enrollment.id = :id")
+                .setParameter("id", enrollment.getId())
+                .executeUpdate();
 
         enrollmentRepository.delete(enrollment);
     }

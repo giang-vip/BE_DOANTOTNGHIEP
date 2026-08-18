@@ -53,6 +53,10 @@ public class AuthServiceImpl implements AuthService {
                         student.getSchoolClass() != null ? student.getSchoolClass().getName() : null);
                 userInfo.setGpa(student.getGpa());
                 userInfo.setTotalCredits(student.getTotalCredits());
+                userInfo.setMajorTotalCredits(student.getMajor() != null ? student.getMajor().getTotalCredits() : null);
+                if (student.getSchoolClass() != null && student.getSchoolClass().getEntryAcademicYear() != null && student.getSchoolClass().getEntryAcademicYear().getStartDate() != null) {
+                    userInfo.setEntryStartYear(student.getSchoolClass().getEntryAcademicYear().getStartDate().getYear());
+                }
                 userInfo.setDateOfBirth(student.getDateOfBirth() != null ? student.getDateOfBirth().toString() : null);
             });
         } else if (user.getRoles().stream().anyMatch(r -> r.getName().equals("TEACHER"))) {
@@ -73,6 +77,10 @@ public class AuthServiceImpl implements AuthService {
                         student.getSchoolClass() != null ? student.getSchoolClass().getName() : null);
                 userResponse.setGpa(student.getGpa());
                 userResponse.setTotalCredits(student.getTotalCredits());
+                userResponse.setMajorTotalCredits(student.getMajor() != null ? student.getMajor().getTotalCredits() : null);
+                if (student.getSchoolClass() != null && student.getSchoolClass().getEntryAcademicYear() != null && student.getSchoolClass().getEntryAcademicYear().getStartDate() != null) {
+                    userResponse.setEntryStartYear(student.getSchoolClass().getEntryAcademicYear().getStartDate().getYear());
+                }
                 userResponse.setDateOfBirth(student.getDateOfBirth() != null ? student.getDateOfBirth().toString() : null);
             });
         } else if (user.getRoles().stream().anyMatch(r -> r.getName().equals("TEACHER"))) {

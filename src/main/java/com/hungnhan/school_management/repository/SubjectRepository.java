@@ -16,9 +16,13 @@ public interface SubjectRepository extends JpaRepository<Subject, Long> {
 
     boolean existsByCode(String code);
 
-    @Query("SELECT s FROM Subject s " +
-           "LEFT JOIN s.department d " +
-           "WHERE (:departmentId IS NULL OR d.id = :departmentId) " +
+    @Query("SELECT DISTINCT s FROM Subject s " +
+           "LEFT JOIN MajorSubject ms ON ms.subject.id = s.id " +
+           "WHERE (:departmentId IS NULL OR s.department.id = :departmentId) " +
+           "AND (:majorId IS NULL OR ms.major.id = :majorId) " +
            "AND (:search IS NULL OR LOWER(s.code) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(s.name) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<Subject> searchSubjects(@Param("search") String search, @Param("departmentId") Long departmentId, Pageable pageable);
+    Page<Subject> searchSubjects(@Param("search") String search, @Param("departmentId") Long departmentId, @Param("majorId") Long majorId, Pageable pageable);
+
+    @Query("SELECT COUNT(ms) FROM MajorSubject ms WHERE ms.major.id = :majorId")
+    long countByMajorId(@Param("majorId") Long majorId);
 }

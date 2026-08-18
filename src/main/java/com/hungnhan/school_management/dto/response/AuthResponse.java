@@ -33,6 +33,8 @@ public class AuthResponse {
         private java.math.BigDecimal gpa;
         private Integer totalCredits;
         private String dateOfBirth;
+        private Integer majorTotalCredits;
+        private Integer entryStartYear;
 
         private String teacherCode;
         private String departmentName;

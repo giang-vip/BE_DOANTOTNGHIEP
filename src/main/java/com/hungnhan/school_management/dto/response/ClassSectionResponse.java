@@ -37,4 +37,6 @@ public class ClassSectionResponse {
     private Integer midtermWeight;
     private Integer finalWeight;
     private Integer enrolledCount;
+    private Integer subjectSemesterIndex;
+    private String subjectType;
 }

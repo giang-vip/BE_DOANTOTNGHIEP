@@ -21,4 +21,17 @@ public class AdminDashboardController {
                 .result(adminDashboardService.getDashboardStats())
                 .build();
     }
+
+    @GetMapping("/grade-distribution")
+    public ApiResponse<java.util.Map<String, Integer>> getGradeDistribution(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Long yearId,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Long semesterId,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Long classSectionId,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Long departmentId,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Long majorId) {
+        
+        return ApiResponse.<java.util.Map<String, Integer>>builder()
+                .result(adminDashboardService.getGradeDistribution(yearId, semesterId, classSectionId, departmentId, majorId))
+                .build();
+    }
 }

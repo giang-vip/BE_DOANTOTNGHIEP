@@ -28,17 +28,18 @@ public interface ClassSectionRepository extends JpaRepository<ClassSection, Long
            "AND (:subjectId IS NULL OR s.id = :subjectId) " +
            "AND (:departmentId IS NULL OR d.id = :departmentId) " +
            "AND (:majorId IS NULL OR m.id = :majorId) " +
-           "AND (:search IS NULL OR LOWER(c.sectionCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "AND (:search IS NULL OR LOWER(c.sectionCode) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(s.name) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<ClassSection> searchClassSections(@Param("search") String search, @Param("semesterId") Long semesterId, @Param("subjectId") Long subjectId, @Param("departmentId") Long departmentId, @Param("majorId") Long majorId, Pageable pageable);
 
     @Query("SELECT c FROM ClassSection c " +
            "LEFT JOIN c.subject s " +
            "LEFT JOIN c.semester sm " +
+           "LEFT JOIN c.department d " +
            "LEFT JOIN c.major m " +
            "WHERE (:semesterId IS NULL OR sm.id = :semesterId) " +
-           "AND (:majorId IS NULL OR m.id = :majorId OR m.id IS NULL) " +
+           "AND (d IS NULL OR (d.id = :departmentId AND m IS NULL) OR (d.id = :departmentId AND m.id = :majorId)) " +
            "AND (:search IS NULL OR LOWER(c.sectionCode) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(s.name) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<ClassSection> searchAvailableClassesForStudent(@Param("semesterId") Long semesterId, @Param("majorId") Long majorId, @Param("search") String search, Pageable pageable);
+    Page<ClassSection> searchAvailableClassesForStudent(@Param("semesterId") Long semesterId, @Param("departmentId") Long departmentId, @Param("majorId") Long majorId, @Param("search") String search, Pageable pageable);
 
     @Query("SELECT c FROM ClassSection c " +
            "LEFT JOIN c.subject s " +

@@ -26,6 +26,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     private final TeacherRepository teacherRepository;
     private final ClassSectionRepository classSectionRepository;
     private final DepartmentRepository departmentRepository;
+    private final com.hungnhan.school_management.repository.EnrollmentRepository enrollmentRepository;
 
     @Override
     public AdminDashboardResponse getDashboardStats() {
@@ -117,5 +118,34 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         if (fullName.contains("An toàn thông tin")) return "Khoa ATTT";
         if (fullName.contains("Hệ thống thông tin")) return "Khoa HTTT";
         return fullName;
+    }
+
+    @Override
+    public Map<String, Integer> getGradeDistribution(Long yearId, Long semesterId, Long classSectionId, Long departmentId, Long majorId) {
+        List<Object[]> results = enrollmentRepository.getGradeDistributionCounts(yearId, semesterId, classSectionId, departmentId, majorId);
+        Map<String, Integer> distribution = new HashMap<>();
+        
+        // Khởi tạo các giá trị mặc định để Frontend luôn có data
+        distribution.put("A", 0);
+        distribution.put("B+", 0);
+        distribution.put("B", 0);
+        distribution.put("C+", 0);
+        distribution.put("C", 0);
+        distribution.put("D+", 0);
+        distribution.put("D", 0);
+        distribution.put("F", 0);
+        
+        for (Object[] row : results) {
+            String grade = (String) row[0];
+            Long count = (Long) row[1];
+            if (grade != null && distribution.containsKey(grade)) {
+                distribution.put(grade, count.intValue());
+            } else if (grade != null) {
+                // In case there are other grade formats, map them to our format if possible, or just add them
+                distribution.put(grade, count.intValue());
+            }
+        }
+        
+        return distribution;
     }
 }

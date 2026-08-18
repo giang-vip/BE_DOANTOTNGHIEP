@@ -13,6 +13,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import com.hungnhan.school_management.repository.ClassSectionRepository;
+import com.hungnhan.school_management.entity.ClassSection;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/student")
@@ -21,6 +25,21 @@ import org.springframework.web.bind.annotation.*;
 public class StudentDashboardController {
 
     private final StudentDashboardService studentDashboardService;
+    private final ClassSectionRepository classSectionRepository;
+
+    @GetMapping("/debug-classes")
+    public java.util.Map<String, Object> debugClasses() {
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        List<ClassSection> classes = classSectionRepository.findAll();
+        for (ClassSection c : classes) {
+            if (c.getId() == 2014 || c.getId() == 2015) {
+                Long dId = c.getDepartment() != null ? c.getDepartment().getId() : null;
+                Long mId = c.getMajor() != null ? c.getMajor().getId() : null;
+                result.put("class_" + c.getId(), "Subject: " + c.getSubject().getId() + " Dept: " + dId + " Major: " + mId);
+            }
+        }
+        return result;
+    }
 
     @GetMapping("/classes")
     @Operation(summary = "Lịch học (Danh sách lớp học phần sinh viên tham gia) (API_ST_01)")
@@ -55,6 +74,17 @@ public class StudentDashboardController {
     public ApiResponse<RegistrationPeriodResponse> getCurrentPeriod() {
         return ApiResponse.<RegistrationPeriodResponse>builder()
                 .result(studentDashboardService.getCurrentRegistrationPeriod())
+                .build();
+    }
+
+    @GetMapping("/registration/curriculum")
+    @Operation(summary = "Lấy danh sách khung chương trình (danh sách môn học) của sinh viên")
+    public ApiResponse<List<com.hungnhan.school_management.dto.response.StudentCurriculumResponse>> getStudentCurriculum() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        return ApiResponse.<List<com.hungnhan.school_management.dto.response.StudentCurriculumResponse>>builder()
+                .result(studentDashboardService.getStudentCurriculum(username))
                 .build();
     }
 

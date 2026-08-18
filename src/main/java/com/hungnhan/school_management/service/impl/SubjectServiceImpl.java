@@ -9,8 +9,11 @@ import com.hungnhan.school_management.exception.AppException;
 import com.hungnhan.school_management.exception.ErrorCode;
 import com.hungnhan.school_management.mapper.SubjectMapper;
 import com.hungnhan.school_management.repository.DepartmentRepository;
+import com.hungnhan.school_management.repository.MajorRepository;
 import com.hungnhan.school_management.repository.SubjectRepository;
 import com.hungnhan.school_management.service.SubjectService;
+import com.hungnhan.school_management.constant.SubjectType;
+import com.hungnhan.school_management.entity.Major;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -31,6 +34,8 @@ public class SubjectServiceImpl implements SubjectService {
 
     private final SubjectRepository subjectRepository;
     private final DepartmentRepository departmentRepository;
+    private final MajorRepository majorRepository;
+    private final com.hungnhan.school_management.repository.MajorSubjectRepository majorSubjectRepository;
     private final SubjectMapper subjectMapper;
 
     @Override
@@ -51,8 +56,9 @@ public class SubjectServiceImpl implements SubjectService {
 
         Subject subject = subjectMapper.toSubject(request);
         subject.setDepartment(department);
+        Subject savedSubject = subjectRepository.save(subject);
 
-        return subjectMapper.toSubjectResponse(subjectRepository.save(subject));
+        return subjectMapper.toSubjectResponse(savedSubject);
     }
 
     @Override
@@ -77,16 +83,30 @@ public class SubjectServiceImpl implements SubjectService {
         subjectMapper.updateSubject(subject, request);
         subject.setDepartment(department);
 
-        return subjectMapper.toSubjectResponse(subjectRepository.save(subject));
+        Subject updatedSubject = subjectRepository.save(subject);
+
+        return subjectMapper.toSubjectResponse(updatedSubject);
     }
 
     @Override
-    public PageResponse<SubjectResponse> getSubjects(String search, Long departmentId, int page, int size) {
+    public PageResponse<SubjectResponse> getSubjects(String search, Long departmentId, Long majorId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Subject> subjectPage = subjectRepository.searchSubjects(search, departmentId, pageable);
+        Page<Subject> subjectPage = subjectRepository.searchSubjects(search, departmentId, majorId, pageable);
 
         List<SubjectResponse> content = subjectPage.getContent().stream()
-                .map(subjectMapper::toSubjectResponse)
+                .map(subject -> {
+                    SubjectResponse response = subjectMapper.toSubjectResponse(subject);
+                    if (majorId != null) {
+                        majorSubjectRepository.findByMajorIdAndSubjectId(majorId, subject.getId())
+                                .ifPresent(ms -> {
+                                    response.setMajorId(ms.getMajor().getId());
+                                    response.setMajorName(ms.getMajor().getName());
+                                    response.setType(ms.getSubjectType().name());
+                                    response.setSemesterIndex(ms.getRecommendedSemester());
+                                });
+                    }
+                    return response;
+                })
                 .collect(Collectors.toList());
 
         return PageResponse.<SubjectResponse>builder()
@@ -110,6 +130,7 @@ public class SubjectServiceImpl implements SubjectService {
     public void deleteSubject(Long id) {
         Subject subject = subjectRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.SUBJECT_NOT_FOUND));
+        majorSubjectRepository.deleteBySubjectId(id);
         subjectRepository.delete(subject);
     }
 }

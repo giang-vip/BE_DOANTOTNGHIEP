@@ -24,5 +24,7 @@ public class MajorRequest {
 
     private String description;
 
+    private Integer totalCredits;
+
     private String status; // ACTIVE, INACTIVE
 }

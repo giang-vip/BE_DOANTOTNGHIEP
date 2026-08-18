@@ -12,6 +12,7 @@ public interface MajorMapper {
 
     @Mapping(target = "departmentId", source = "department.id")
     @Mapping(target = "departmentName", source = "department.name")
+    @Mapping(target = "subjectCount", source = "subjectCount")
     MajorResponse toMajorResponse(Major major);
 
     @Mapping(target = "id", ignore = true)

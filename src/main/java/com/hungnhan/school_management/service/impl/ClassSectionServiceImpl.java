@@ -21,6 +21,7 @@ import com.hungnhan.school_management.repository.SchoolClassRepository;
 import com.hungnhan.school_management.repository.SemesterRepository;
 import com.hungnhan.school_management.repository.SubjectRepository;
 import com.hungnhan.school_management.repository.TeacherRepository;
+import com.hungnhan.school_management.repository.EnrollmentRepository;
 import com.hungnhan.school_management.service.ClassSectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,7 @@ public class ClassSectionServiceImpl implements ClassSectionService {
     private final SubjectRepository subjectRepository;
     private final TeacherRepository teacherRepository;
     private final SemesterRepository semesterRepository;
+    private final EnrollmentRepository enrollmentRepository;
     private final ClassSectionMapper classSectionMapper;
 
     @Override
@@ -152,8 +154,26 @@ public class ClassSectionServiceImpl implements ClassSectionService {
         Pageable pageable = PageRequest.of(page, size);
         Page<ClassSection> classSectionPage = classSectionRepository.searchClassSections(search, semesterId, subjectId, departmentId, majorId, pageable);
 
+        List<Long> classSectionIds = classSectionPage.getContent().stream()
+                .map(ClassSection::getId)
+                .collect(Collectors.toList());
+                
+        java.util.Map<Long, Integer> enrollmentCounts = new java.util.HashMap<>();
+        if (!classSectionIds.isEmpty()) {
+            List<Object[]> counts = enrollmentRepository.countActiveEnrollmentsByClassSectionIds(classSectionIds);
+            for (Object[] row : counts) {
+                Long id = (Long) row[0];
+                Long count = (Long) row[1];
+                enrollmentCounts.put(id, count.intValue());
+            }
+        }
+
         List<ClassSectionResponse> content = classSectionPage.getContent().stream()
-                .map(classSectionMapper::toClassSectionResponse)
+                .map(cs -> {
+                    ClassSectionResponse res = classSectionMapper.toClassSectionResponse(cs);
+                    res.setEnrolledCount(enrollmentCounts.getOrDefault(cs.getId(), 0));
+                    return res;
+                })
                 .collect(Collectors.toList());
 
         return PageResponse.<ClassSectionResponse>builder()
@@ -170,7 +190,9 @@ public class ClassSectionServiceImpl implements ClassSectionService {
     public ClassSectionResponse getClassSectionById(Long id) {
         ClassSection classSection = classSectionRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CLASS_SECTION_NOT_FOUND));
-        return classSectionMapper.toClassSectionResponse(classSection);
+        ClassSectionResponse res = classSectionMapper.toClassSectionResponse(classSection);
+        res.setEnrolledCount((int) enrollmentRepository.countActiveEnrollmentsByClassSectionId(id));
+        return res;
     }
 
     @Override

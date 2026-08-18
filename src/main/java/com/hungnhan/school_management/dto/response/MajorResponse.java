@@ -18,6 +18,8 @@ public class MajorResponse {
     private String code;
     private String name;
     private String description;
+    private Integer totalCredits;
     private String status;
+    private Integer subjectCount;
     private LocalDateTime createdAt;
 }

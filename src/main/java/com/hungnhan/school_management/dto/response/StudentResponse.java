@@ -25,4 +25,6 @@ public class StudentResponse {
     private Long classId;
     private String classCode;
     private StudentStatus status;
+    private Integer majorTotalCredits;
+    private Integer entryStartYear;
 }

@@ -32,11 +32,12 @@ public class SubjectController {
     public ApiResponse<PageResponse<SubjectResponse>> getSubjects(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) Long majorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         return ApiResponse.<PageResponse<SubjectResponse>>builder()
-                .result(subjectService.getSubjects(search, departmentId, page, size))
+                .result(subjectService.getSubjects(search, departmentId, majorId, page, size))
                 .build();
     }
 
@@ -58,10 +59,13 @@ public class SubjectController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Xóa môn học")
-    public ApiResponse<String> deleteSubject(@PathVariable Long id) {
+    public ApiResponse<Void> deleteSubject(@PathVariable Long id) {
         subjectService.deleteSubject(id);
-        return ApiResponse.<String>builder()
-                .result("Môn học đã được xóa thành công")
-                .build();
+        return ApiResponse.<Void>builder().build();
+    }
+
+    @GetMapping("/debug")
+    public Object debugSubjects(@RequestParam(required = false) Long departmentId, @RequestParam(required = false) Long majorId) {
+        return subjectService.getSubjects(null, departmentId, majorId, 0, 50);
     }
 }

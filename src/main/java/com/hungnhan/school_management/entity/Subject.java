@@ -2,6 +2,7 @@ package com.hungnhan.school_management.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.hungnhan.school_management.constant.SubjectType;
 
 @Entity
 @Table(name = "subjects")

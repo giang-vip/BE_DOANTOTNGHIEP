@@ -19,8 +19,10 @@ public interface StudentMapper {
     @Mapping(source = "user.username", target = "username")
     @Mapping(source = "major.id", target = "majorId")
     @Mapping(source = "major.name", target = "majorName")
+    @Mapping(source = "major.totalCredits", target = "majorTotalCredits")
     @Mapping(source = "schoolClass.id", target = "classId")
     @Mapping(source = "schoolClass.code", target = "classCode")
+    @Mapping(target = "entryStartYear", expression = "java(student.getSchoolClass() != null && student.getSchoolClass().getEntryAcademicYear() != null && student.getSchoolClass().getEntryAcademicYear().getStartDate() != null ? student.getSchoolClass().getEntryAcademicYear().getStartDate().getYear() : null)")
     StudentResponse toStudentResponse(Student student);
 
     @Mapping(target = "user", ignore = true)

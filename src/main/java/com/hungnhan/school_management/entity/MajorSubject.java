@@ -35,10 +35,10 @@ public class MajorSubject {
     @Column(name = "recommended_semester")
     private Integer recommendedSemester;
 
-    /** TRUE: bat buoc, FALSE: tu chon */
-    @Column(name = "is_required", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "subject_type", nullable = false)
     @Builder.Default
-    private Boolean isRequired = true;
+    private com.hungnhan.school_management.constant.SubjectType subjectType = com.hungnhan.school_management.constant.SubjectType.COMPULSORY;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

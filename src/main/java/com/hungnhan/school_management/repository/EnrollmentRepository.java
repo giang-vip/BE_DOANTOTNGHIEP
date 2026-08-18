@@ -21,6 +21,9 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     @Query("SELECT COUNT(e) FROM Enrollment e WHERE e.classSection.id = :classSectionId AND e.status = 'ACTIVE'")
     long countActiveEnrollmentsByClassSectionId(@Param("classSectionId") Long classSectionId);
 
+    @Query("SELECT e.classSection.id, COUNT(e) FROM Enrollment e WHERE e.classSection.id IN :classSectionIds AND e.status = 'ACTIVE' GROUP BY e.classSection.id")
+    java.util.List<Object[]> countActiveEnrollmentsByClassSectionIds(@Param("classSectionIds") java.util.List<Long> classSectionIds);
+
     @EntityGraph(attributePaths = {
         "classSection",
         "classSection.subject",
@@ -34,4 +37,23 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
            "WHERE (:studentId IS NULL OR e.student.id = :studentId) " +
            "AND (:classSectionId IS NULL OR e.classSection.id = :classSectionId)")
     Page<Enrollment> searchEnrollments(@Param("studentId") Long studentId, @Param("classSectionId") Long classSectionId, Pageable pageable);
+
+    @Query("SELECT e.finalGrade, COUNT(e) FROM Enrollment e " +
+           "JOIN e.classSection cs " +
+           "LEFT JOIN cs.semester sem " +
+           "LEFT JOIN sem.academicYear y " +
+           "LEFT JOIN cs.department d " +
+           "LEFT JOIN cs.major m " +
+           "WHERE (:yearId IS NULL OR y.id = :yearId) " +
+           "AND (:semesterId IS NULL OR sem.id = :semesterId) " +
+           "AND (:classSectionId IS NULL OR cs.id = :classSectionId) " +
+           "AND (:departmentId IS NULL OR d.id = :departmentId) " +
+           "AND (:majorId IS NULL OR m.id = :majorId) " +
+           "AND e.finalGrade IS NOT NULL " +
+           "GROUP BY e.finalGrade")
+    java.util.List<Object[]> getGradeDistributionCounts(@Param("yearId") Long yearId, 
+                                              @Param("semesterId") Long semesterId, 
+                                              @Param("classSectionId") Long classSectionId, 
+                                              @Param("departmentId") Long departmentId, 
+                                              @Param("majorId") Long majorId);
 }
