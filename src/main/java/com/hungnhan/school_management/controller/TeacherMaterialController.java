@@ -3,6 +3,7 @@ package com.hungnhan.school_management.controller;
 import com.hungnhan.school_management.dto.ApiResponse;
 import com.hungnhan.school_management.dto.request.LearningMaterialRequest;
 import com.hungnhan.school_management.dto.response.LearningMaterialResponse;
+import com.hungnhan.school_management.dto.response.DocumentResponse;
 import com.hungnhan.school_management.dto.response.PageResponse;
 import com.hungnhan.school_management.service.TeacherMaterialService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,6 +37,21 @@ public class TeacherMaterialController {
 
         return ApiResponse.<PageResponse<LearningMaterialResponse>>builder()
                 .result(teacherMaterialService.getMaterials(username, classSectionId, page, size))
+                .build();
+    }
+
+    @GetMapping("/classes/{classSectionId}/subject-materials")
+    @Operation(summary = "Danh sách học liệu gốc của môn học (API_TC_07_SUBJ)")
+    public ApiResponse<PageResponse<DocumentResponse>> getSubjectMaterials(
+            @PathVariable Long classSectionId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        return ApiResponse.<PageResponse<DocumentResponse>>builder()
+                .result(teacherMaterialService.getSubjectMaterials(username, classSectionId, page, size))
                 .build();
     }
 

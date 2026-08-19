@@ -45,6 +45,7 @@ public interface ClassSectionRepository extends JpaRepository<ClassSection, Long
            "LEFT JOIN c.subject s " +
            "LEFT JOIN c.semester sm " +
            "WHERE c.teacher.id = :teacherId " +
+           "AND c.status = 'ACTIVE' " +
            "AND (:semesterId IS NULL OR sm.id = :semesterId) " +
            "AND (:search IS NULL OR LOWER(c.sectionCode) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(s.name) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<ClassSection> searchTeacherClassSections(@Param("teacherId") Long teacherId, @Param("search") String search, @Param("semesterId") Long semesterId, Pageable pageable);

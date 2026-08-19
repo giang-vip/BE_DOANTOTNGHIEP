@@ -2,9 +2,13 @@ package com.hungnhan.school_management.controller;
 
 import com.hungnhan.school_management.dto.ApiResponse;
 import com.hungnhan.school_management.dto.request.StudentRequest;
+import com.hungnhan.school_management.dto.response.ClassSectionResponse;
 import com.hungnhan.school_management.dto.response.PageResponse;
+import com.hungnhan.school_management.dto.response.StudentGradeResponse;
 import com.hungnhan.school_management.dto.response.StudentResponse;
 import com.hungnhan.school_management.service.StudentService;
+import com.hungnhan.school_management.service.StudentGradeService;
+import com.hungnhan.school_management.service.StudentDashboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -18,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 public class StudentController {
 
     private final StudentService studentService;
+    private final StudentGradeService studentGradeService;
+    private final StudentDashboardService studentDashboardService;
 
     @PostMapping
     @Operation(summary = "Tạo mới sinh viên (API_AD_16)")
@@ -47,6 +53,31 @@ public class StudentController {
     public ApiResponse<StudentResponse> getStudentById(@PathVariable Long id) {
         return ApiResponse.<StudentResponse>builder()
                 .result(studentService.getStudentById(id))
+                .build();
+    }
+
+    @GetMapping("/{id}/grades")
+    @Operation(summary = "Lấy điểm của sinh viên (Admin)")
+    public ApiResponse<PageResponse<StudentGradeResponse>> getStudentGrades(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long semesterId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ApiResponse.<PageResponse<StudentGradeResponse>>builder()
+                .result(studentGradeService.getStudentGradesByStudentId(id, semesterId, page, size))
+                .build();
+    }
+
+    @GetMapping("/{id}/classes")
+    @Operation(summary = "Lấy danh sách lớp học phần của sinh viên (Admin)")
+    public ApiResponse<PageResponse<ClassSectionResponse>> getStudentClasses(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size
+    ) {
+        return ApiResponse.<PageResponse<ClassSectionResponse>>builder()
+                .result(studentDashboardService.getStudentClassesByStudentId(id, page, size))
                 .build();
     }
 

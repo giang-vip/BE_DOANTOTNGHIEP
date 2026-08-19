@@ -26,6 +26,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,6 +69,8 @@ public class TeacherClassServiceImpl implements TeacherClassService {
         List<ClassSectionResponse> content = classSectionPage.getContent().stream()
                 .map(classSectionMapper::toClassSectionResponse)
                 .collect(Collectors.toList());
+                
+        populateEnrolledCounts(content);
 
         return PageResponse.<ClassSectionResponse>builder()
                 .content(content)
@@ -76,6 +80,51 @@ public class TeacherClassServiceImpl implements TeacherClassService {
                 .totalPages(classSectionPage.getTotalPages())
                 .last(classSectionPage.isLast())
                 .build();
+    }
+
+    @Override
+    public PageResponse<ClassSectionResponse> getTeacherClassSectionsByTeacherId(Long teacherId, String search, Long semesterId, int page, int size) {
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new AppException(ErrorCode.TEACHER_NOT_FOUND));
+        
+        Long actualSemesterId = semesterId;
+        if (actualSemesterId == null) {
+            actualSemesterId = semesterRepository.findByIsCurrentTrue()
+                .map(com.hungnhan.school_management.entity.Semester::getId)
+                .orElse(null);
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ClassSection> classSectionPage = classSectionRepository.searchTeacherClassSections(teacher.getId(), search, actualSemesterId, pageable);
+
+        List<ClassSectionResponse> content = classSectionPage.getContent().stream()
+                .map(classSectionMapper::toClassSectionResponse)
+                .collect(Collectors.toList());
+                
+        populateEnrolledCounts(content);
+
+        return PageResponse.<ClassSectionResponse>builder()
+                .content(content)
+                .pageNumber(classSectionPage.getNumber())
+                .pageSize(classSectionPage.getSize())
+                .totalElements(classSectionPage.getTotalElements())
+                .totalPages(classSectionPage.getTotalPages())
+                .last(classSectionPage.isLast())
+                .build();
+    }
+    
+    private void populateEnrolledCounts(List<ClassSectionResponse> responses) {
+        if (responses.isEmpty()) return;
+        List<Long> classSectionIds = responses.stream().map(ClassSectionResponse::getId).collect(Collectors.toList());
+        Map<Long, Integer> countMap = new HashMap<>();
+        for (Object[] row : enrollmentRepository.countActiveEnrollmentsByClassSectionIds(classSectionIds)) {
+            Long id = ((Number) row[0]).longValue();
+            Integer count = ((Number) row[1]).intValue();
+            countMap.put(id, count);
+        }
+        for (ClassSectionResponse response : responses) {
+            response.setEnrolledCount(countMap.getOrDefault(response.getId(), 0));
+        }
     }
 
     @Override

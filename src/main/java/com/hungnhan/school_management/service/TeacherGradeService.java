@@ -11,4 +11,8 @@ public interface TeacherGradeService {
     PageResponse<FinalGradeResponse> getFinalGrades(String username, Long classSectionId, int page, int size);
 
     void updateStudentGrades(String username, Long classSectionId, java.util.List<com.hungnhan.school_management.dto.request.TeacherGradeUpdateRequest> requests);
+
+    PageResponse<FinalGradeResponse> getFinalGradesForAdmin(Long classSectionId, int page, int size);
+
+    void updateStudentGradesForAdmin(Long classSectionId, java.util.List<com.hungnhan.school_management.dto.request.TeacherGradeUpdateRequest> requests);
 }

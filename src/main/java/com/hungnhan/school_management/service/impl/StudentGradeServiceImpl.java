@@ -83,4 +83,48 @@ public class StudentGradeServiceImpl implements StudentGradeService {
                 .last(enrollmentPage.isLast())
                 .build();
     }
+
+    @Override
+    public PageResponse<StudentGradeResponse> getStudentGradesByStudentId(Long studentId, Long semesterId, int page, int size) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new AppException(ErrorCode.STUDENT_NOT_FOUND));
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Enrollment> enrollmentPage = enrollmentRepository.searchEnrollments(student.getId(), null, pageable);
+
+        // Filter by semesterId if provided
+        List<Enrollment> enrollments = enrollmentPage.getContent();
+        if (semesterId != null) {
+            enrollments = enrollments.stream()
+                    .filter(e -> e.getClassSection().getSemester() != null && e.getClassSection().getSemester().getId().equals(semesterId))
+                    .collect(Collectors.toList());
+        }
+
+        List<StudentGradeResponse> content = enrollments.stream().map(enrollment -> {
+            ClassSection section = enrollment.getClassSection();
+            return StudentGradeResponse.builder()
+                    .enrollmentId(enrollment.getId())
+                    .classSectionId(section.getId())
+                    .subjectCode(section.getSubject().getCode())
+                    .subjectName(section.getSubject().getName())
+                    .sectionCode(section.getSectionCode())
+                    .credits(section.getSubject().getCredits())
+                    .semesterName(section.getSemester() != null ? section.getSemester().getName() : null)
+                    .attendanceScore(enrollment.getAttendanceScore())
+                    .midtermScore(enrollment.getMidtermScore())
+                    .finalExamScore(enrollment.getFinalExamScore())
+                    .finalScore(enrollment.getFinalScore())
+                    .finalGrade(enrollment.getFinalGrade())
+                    .build();
+        }).collect(Collectors.toList());
+
+        return PageResponse.<StudentGradeResponse>builder()
+                .content(content)
+                .pageNumber(enrollmentPage.getNumber())
+                .pageSize(enrollmentPage.getSize())
+                .totalElements(enrollmentPage.getTotalElements())
+                .totalPages(enrollmentPage.getTotalPages())
+                .last(enrollmentPage.isLast())
+                .build();
+    }
 }

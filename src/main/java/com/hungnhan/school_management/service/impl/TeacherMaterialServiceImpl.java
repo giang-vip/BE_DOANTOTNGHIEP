@@ -3,14 +3,18 @@ package com.hungnhan.school_management.service.impl;
 import com.hungnhan.school_management.dto.request.LearningMaterialRequest;
 import com.hungnhan.school_management.dto.response.LearningMaterialResponse;
 import com.hungnhan.school_management.dto.response.PageResponse;
+import com.hungnhan.school_management.dto.response.DocumentResponse;
 import com.hungnhan.school_management.entity.ClassSection;
+import com.hungnhan.school_management.entity.Document;
 import com.hungnhan.school_management.entity.LearningMaterial;
 import com.hungnhan.school_management.entity.Teacher;
 import com.hungnhan.school_management.entity.User;
 import com.hungnhan.school_management.exception.AppException;
 import com.hungnhan.school_management.exception.ErrorCode;
 import com.hungnhan.school_management.mapper.LearningMaterialMapper;
+import com.hungnhan.school_management.mapper.DocumentMapper;
 import com.hungnhan.school_management.repository.ClassSectionRepository;
+import com.hungnhan.school_management.repository.DocumentRepository;
 import com.hungnhan.school_management.repository.LearningMaterialRepository;
 import com.hungnhan.school_management.repository.TeacherRepository;
 import com.hungnhan.school_management.repository.UserRepository;
@@ -39,6 +43,8 @@ public class TeacherMaterialServiceImpl implements TeacherMaterialService {
     private final UserRepository userRepository;
     private final TeacherRepository teacherRepository;
     private final LearningMaterialMapper learningMaterialMapper;
+    private final DocumentMapper documentMapper;
+    private final DocumentRepository documentRepository;
     private final FileUploadService fileUploadService;
 
     private User getUserByUsername(String username) {
@@ -77,6 +83,32 @@ public class TeacherMaterialServiceImpl implements TeacherMaterialService {
                 .totalElements(materialPage.getTotalElements())
                 .totalPages(materialPage.getTotalPages())
                 .last(materialPage.isLast())
+                .build();
+    }
+
+    @Override
+    public PageResponse<DocumentResponse> getSubjectMaterials(String username, Long classSectionId, int page, int size) {
+        User user = getUserByUsername(username);
+
+        ClassSection classSection = classSectionRepository.findById(classSectionId)
+                .orElseThrow(() -> new AppException(ErrorCode.CLASS_SECTION_NOT_FOUND));
+
+        checkTeacherPermission(user, classSection);
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Document> documentPage = documentRepository.findByOwnerTypeAndOwnerIdOrderByUploadedAtDesc("SUBJECT", classSection.getSubject().getId(), pageable);
+
+        List<DocumentResponse> content = documentPage.getContent().stream()
+                .map(documentMapper::toDocumentResponse)
+                .collect(Collectors.toList());
+
+        return PageResponse.<DocumentResponse>builder()
+                .content(content)
+                .pageNumber(documentPage.getNumber())
+                .pageSize(documentPage.getSize())
+                .totalElements(documentPage.getTotalElements())
+                .totalPages(documentPage.getTotalPages())
+                .last(documentPage.isLast())
                 .build();
     }
 

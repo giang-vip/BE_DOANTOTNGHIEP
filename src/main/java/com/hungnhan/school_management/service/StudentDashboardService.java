@@ -11,6 +11,8 @@ import java.util.List;
 public interface StudentDashboardService {
 
     PageResponse<ClassSectionResponse> getStudentClasses(String username, int page, int size);
+    
+    PageResponse<ClassSectionResponse> getStudentClassesByStudentId(Long studentId, int page, int size);
 
     PageResponse<AnnouncementResponse> getStudentAnnouncements(String username, int page, int size);
 

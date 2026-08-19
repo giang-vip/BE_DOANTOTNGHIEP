@@ -180,4 +180,56 @@ public class TeacherGradeServiceImpl implements TeacherGradeService {
             calculateFinalGradeAndMap(enrollment);
         }
     }
+
+    @Override
+    @Transactional
+    public PageResponse<FinalGradeResponse> getFinalGradesForAdmin(Long classSectionId, int page, int size) {
+        ClassSection classSection = classSectionRepository.findById(classSectionId)
+                .orElseThrow(() -> new AppException(ErrorCode.CLASS_SECTION_NOT_FOUND));
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Enrollment> enrollmentPage = enrollmentRepository.searchEnrollments(null, classSectionId, pageable);
+
+        List<FinalGradeResponse> content = enrollmentPage.getContent().stream()
+                .map(this::calculateFinalGradeAndMap)
+                .collect(Collectors.toList());
+
+        return PageResponse.<FinalGradeResponse>builder()
+                .content(content)
+                .pageNumber(enrollmentPage.getNumber())
+                .pageSize(enrollmentPage.getSize())
+                .totalElements(enrollmentPage.getTotalElements())
+                .totalPages(enrollmentPage.getTotalPages())
+                .last(enrollmentPage.isLast())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void updateStudentGradesForAdmin(Long classSectionId, List<com.hungnhan.school_management.dto.request.TeacherGradeUpdateRequest> requests) {
+        ClassSection classSection = classSectionRepository.findById(classSectionId)
+                .orElseThrow(() -> new AppException(ErrorCode.CLASS_SECTION_NOT_FOUND));
+
+        for (com.hungnhan.school_management.dto.request.TeacherGradeUpdateRequest req : requests) {
+            Enrollment enrollment = enrollmentRepository.findById(req.getEnrollmentId())
+                    .orElseThrow(() -> new AppException(ErrorCode.RECORD_NOT_FOUND));
+
+            if (!enrollment.getClassSection().getId().equals(classSectionId)) {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+
+            if (req.getAttendanceScore() != null) {
+                enrollment.setAttendanceScore(req.getAttendanceScore());
+            }
+            if (req.getMidtermScore() != null) {
+                enrollment.setMidtermScore(req.getMidtermScore());
+            }
+            if (req.getFinalExamScore() != null) {
+                enrollment.setFinalExamScore(req.getFinalExamScore());
+            }
+
+            // Recalculate and save final score immediately
+            calculateFinalGradeAndMap(enrollment);
+        }
+    }
 }

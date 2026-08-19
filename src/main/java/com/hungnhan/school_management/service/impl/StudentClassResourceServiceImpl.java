@@ -2,6 +2,7 @@ package com.hungnhan.school_management.service.impl;
 
 import com.hungnhan.school_management.dto.response.AttendanceRecordResponse;
 import com.hungnhan.school_management.dto.response.LearningMaterialResponse;
+import com.hungnhan.school_management.dto.response.DocumentResponse;
 import com.hungnhan.school_management.dto.response.PageResponse;
 import com.hungnhan.school_management.entity.*;
 import com.hungnhan.school_management.constant.SessionStatus;
@@ -9,6 +10,7 @@ import com.hungnhan.school_management.exception.AppException;
 import com.hungnhan.school_management.exception.ErrorCode;
 import com.hungnhan.school_management.mapper.AttendanceMapper;
 import com.hungnhan.school_management.mapper.LearningMaterialMapper;
+import com.hungnhan.school_management.mapper.DocumentMapper;
 import com.hungnhan.school_management.repository.*;
 import com.hungnhan.school_management.service.StudentClassResourceService;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +37,10 @@ public class StudentClassResourceServiceImpl implements StudentClassResourceServ
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final LearningMaterialRepository learningMaterialRepository;
     private final AttendanceSessionRepository attendanceSessionRepository;
+    private final DocumentRepository documentRepository;
     private final AttendanceMapper attendanceMapper;
     private final LearningMaterialMapper learningMaterialMapper;
+    private final DocumentMapper documentMapper;
 
     private Student getStudentByUsername(String username) {
         User user = userRepository.findByUsername(username)
@@ -84,6 +88,28 @@ public class StudentClassResourceServiceImpl implements StudentClassResourceServ
                 .totalElements(materialPage.getTotalElements())
                 .totalPages(materialPage.getTotalPages())
                 .last(materialPage.isLast())
+                .build();
+    }
+
+    @Override
+    public PageResponse<DocumentResponse> getMySubjectMaterials(String username, Long classSectionId, int page, int size) {
+        Student student = getStudentByUsername(username);
+        Enrollment enrollment = getEnrollmentOrThrow(student, classSectionId);
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Document> documentPage = documentRepository.findByOwnerTypeAndOwnerIdOrderByUploadedAtDesc("SUBJECT", enrollment.getClassSection().getSubject().getId(), pageable);
+
+        List<DocumentResponse> content = documentPage.getContent().stream()
+                .map(documentMapper::toDocumentResponse)
+                .collect(Collectors.toList());
+
+        return PageResponse.<DocumentResponse>builder()
+                .content(content)
+                .pageNumber(documentPage.getNumber())
+                .pageSize(documentPage.getSize())
+                .totalElements(documentPage.getTotalElements())
+                .totalPages(documentPage.getTotalPages())
+                .last(documentPage.isLast())
                 .build();
     }
 

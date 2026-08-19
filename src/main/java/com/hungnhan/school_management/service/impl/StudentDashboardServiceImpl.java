@@ -86,6 +86,32 @@ public class StudentDashboardServiceImpl implements StudentDashboardService {
     }
 
     @Override
+    public PageResponse<ClassSectionResponse> getStudentClassesByStudentId(Long studentId, int page, int size) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new AppException(ErrorCode.STUDENT_NOT_FOUND));
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Enrollment> enrollmentPage = enrollmentRepository.searchEnrollments(student.getId(), null, pageable);
+
+        List<ClassSectionResponse> content = enrollmentPage.getContent().stream()
+                .map(enrollment -> {
+                    ClassSectionResponse res = classSectionMapper.toClassSectionResponse(enrollment.getClassSection());
+                    res.setEnrolledCount((int) enrollmentRepository.countActiveEnrollmentsByClassSectionId(res.getId()));
+                    return res;
+                })
+                .collect(Collectors.toList());
+
+        return PageResponse.<ClassSectionResponse>builder()
+                .content(content)
+                .pageNumber(enrollmentPage.getNumber())
+                .pageSize(enrollmentPage.getSize())
+                .totalElements(enrollmentPage.getTotalElements())
+                .totalPages(enrollmentPage.getTotalPages())
+                .last(enrollmentPage.isLast())
+                .build();
+    }
+
+    @Override
     public PageResponse<AnnouncementResponse> getStudentAnnouncements(String username, int page, int size) {
         Student student = getStudentByUsername(username);
 
